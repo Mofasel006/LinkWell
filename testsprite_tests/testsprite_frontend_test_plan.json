@@ -1,0 +1,737 @@
+[
+  {
+    "id": "TC001",
+    "title": "User Signup with valid email and password",
+    "description": "Verify that a new user can successfully sign up with a valid email and a password meeting the requirements.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to signup page"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid email address"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid password that meets length and complexity requirements"
+      },
+      {
+        "type": "action",
+        "description": "Submit the signup form"
+      },
+      {
+        "type": "assertion",
+        "description": "User is created and redirected to dashboard"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "User Signup with invalid email format",
+    "description": "Verify signup is rejected with an invalid email format.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to signup page"
+      },
+      {
+        "type": "action",
+        "description": "Enter an invalid email format"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the signup form"
+      },
+      {
+        "type": "assertion",
+        "description": "Display error message indicating invalid email format, prevent signup"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "User Signup with weak password",
+    "description": "Verify signup is rejected when the password does not meet complexity or length requirements.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to signup page"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid email"
+      },
+      {
+        "type": "action",
+        "description": "Enter a password weaker than policy (e.g., too short)"
+      },
+      {
+        "type": "action",
+        "description": "Submit the signup form"
+      },
+      {
+        "type": "assertion",
+        "description": "Display password strength or requirements error and disallow signup"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "User Login with valid credentials",
+    "description": "Validate successful login using registered email and correct password.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Input valid registered email"
+      },
+      {
+        "type": "action",
+        "description": "Input correct password"
+      },
+      {
+        "type": "action",
+        "description": "Submit login form"
+      },
+      {
+        "type": "assertion",
+        "description": "User is authenticated and redirected to dashboard"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "User Login with invalid credentials",
+    "description": "Verify login fails with incorrect email/password combination.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Enter unregistered or incorrect email"
+      },
+      {
+        "type": "action",
+        "description": "Enter incorrect password"
+      },
+      {
+        "type": "action",
+        "description": "Submit login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Display authentication failure message and remain on login page"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Logout functionality",
+    "description": "Ensure user can successfully logout and no longer has access to protected pages.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with valid credentials"
+      },
+      {
+        "type": "action",
+        "description": "Click logout button or link"
+      },
+      {
+        "type": "assertion",
+        "description": "User session is cleared and redirected to login page"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access dashboard or editor page after logout"
+      },
+      {
+        "type": "assertion",
+        "description": "Access denied and redirected to login page"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Create new document from dashboard",
+    "description": "Verify user can create a new document with a specified title from dashboard and document appears in list.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and navigate to dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Click on 'Create New Document' button"
+      },
+      {
+        "type": "action",
+        "description": "Input a valid document title"
+      },
+      {
+        "type": "action",
+        "description": "Submit creation form"
+      },
+      {
+        "type": "assertion",
+        "description": "New document is listed in dashboard documents list"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Create new document with empty title",
+    "description": "Verify document creation is prevented when title is empty or whitespace.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and navigate to dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Click to create a new document"
+      },
+      {
+        "type": "action",
+        "description": "Leave title field empty or fill with whitespace only"
+      },
+      {
+        "type": "action",
+        "description": "Submit creation form"
+      },
+      {
+        "type": "assertion",
+        "description": "Show validation error disallowing creation"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Delete existing document from dashboard",
+    "description": "Verify that a user can delete a document from the dashboard and it no longer appears in the list.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and navigate to dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Select an existing document"
+      },
+      {
+        "type": "action",
+        "description": "Click delete button or icon for the document"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the delete action when prompted"
+      },
+      {
+        "type": "assertion",
+        "description": "Document is removed from dashboard list"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Dashboard empty state display",
+    "description": "Verify dashboard shows a friendly empty state message or UI when user has no documents.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with a user having zero documents"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Empty state UI or message is displayed clearly prompting user to create documents"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Edit document title in editor",
+    "description": "Verify user can edit the document title from the editor page and changes are saved.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and open an existing document in editor"
+      },
+      {
+        "type": "action",
+        "description": "Change the document title text"
+      },
+      {
+        "type": "action",
+        "description": "Wait for auto-save or trigger save"
+      },
+      {
+        "type": "assertion",
+        "description": "Title change persists and is updated in database"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Rich text formatting in document editor",
+    "description": "Verify that the editor's toolbar performs expected text formatting actions (bold, italics, underline, lists).",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open a document editor"
+      },
+      {
+        "type": "action",
+        "description": "Input sample text"
+      },
+      {
+        "type": "action",
+        "description": "Apply bold formatting to a portion of text"
+      },
+      {
+        "type": "assertion",
+        "description": "Selected text is rendered as bold"
+      },
+      {
+        "type": "action",
+        "description": "Apply italics formatting"
+      },
+      {
+        "type": "assertion",
+        "description": "Selected text is italicized"
+      },
+      {
+        "type": "action",
+        "description": "Apply underline formatting"
+      },
+      {
+        "type": "assertion",
+        "description": "Selected text is underlined"
+      },
+      {
+        "type": "action",
+        "description": "Create bulleted and numbered lists"
+      },
+      {
+        "type": "assertion",
+        "description": "Lists render correctly in editor"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Auto-save triggers correctly during editing",
+    "description": "Validate that document content and title are auto-saved periodically and on field changes without manual save button.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open a document editor"
+      },
+      {
+        "type": "action",
+        "description": "Modify title and content fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Auto-save indicator shows saving and then saved state"
+      },
+      {
+        "type": "action",
+        "description": "Reload or revisit the document"
+      },
+      {
+        "type": "assertion",
+        "description": "Changes made prior are persisted accurately"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Add knowledge reference to document",
+    "description": "Verify user can add a knowledge reference with a label and content which becomes available for AI context.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open a document editor"
+      },
+      {
+        "type": "action",
+        "description": "Open knowledge panel"
+      },
+      {
+        "type": "action",
+        "description": "Fill in label and content for a new knowledge reference"
+      },
+      {
+        "type": "action",
+        "description": "Submit new knowledge reference"
+      },
+      {
+        "type": "assertion",
+        "description": "Reference appears in knowledge panel list"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Update existing knowledge reference",
+    "description": "Verify that an existing knowledge reference can be updated with new label and/or content.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open document editor and knowledge panel"
+      },
+      {
+        "type": "action",
+        "description": "Select existing knowledge item"
+      },
+      {
+        "type": "action",
+        "description": "Modify label and/or content"
+      },
+      {
+        "type": "action",
+        "description": "Save the updates"
+      },
+      {
+        "type": "assertion",
+        "description": "Knowledge reference displays updated information"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Delete knowledge reference from document",
+    "description": "Ensure user can delete a knowledge reference and confirm its removal from AI context and knowledge panel.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open knowledge panel in editor"
+      },
+      {
+        "type": "action",
+        "description": "Select a knowledge reference"
+      },
+      {
+        "type": "action",
+        "description": "Use delete action and confirm prompt"
+      },
+      {
+        "type": "assertion",
+        "description": "Knowledge reference is removed from list and no longer provided to AI"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "AI Assistant quick action - Continue content",
+    "description": "Validate AI generates continuation content correctly given document content and knowledge context when 'Continue' action is triggered.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Load an editor with text content and knowledge references"
+      },
+      {
+        "type": "action",
+        "description": "Trigger AI assistant 'Continue' quick action"
+      },
+      {
+        "type": "assertion",
+        "description": "AI-generated continuation is inserted and relevant to document context"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "AI Assistant quick action - Improve content",
+    "description": "Verify that the 'Improve' quick action generates enhanced text based on selected text and knowledge context.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select text in editor"
+      },
+      {
+        "type": "action",
+        "description": "Activate 'Improve' AI quick action"
+      },
+      {
+        "type": "assertion",
+        "description": "Text is improved with correct integration of knowledge and enhanced quality"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "AI Assistant quick action - Expand content",
+    "description": "Check that the AI 'Expand' action produces lengthened content relevant to the selected text and knowledge base.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select a portion of text"
+      },
+      {
+        "type": "action",
+        "description": "Trigger 'Expand' action in AI assistant"
+      },
+      {
+        "type": "assertion",
+        "description": "Expanded related content is inserted accurately and contextually"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "AI Assistant quick action - Summarize content",
+    "description": "Verify AI produces a concise summary of selected content using knowledge context with the 'Summarize' quick action.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select a paragraph or section in editor"
+      },
+      {
+        "type": "action",
+        "description": "Click 'Summarize' in AI assistant panel"
+      },
+      {
+        "type": "assertion",
+        "description": "Summary text is generated reflecting key points based on selected content and knowledge"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "AI Assistant free-form chat conversation",
+    "description": "Test the AI chat feature allowing user to input free-form prompts and receive contextually accurate replies based on document and knowledge.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open AI Assistant panel"
+      },
+      {
+        "type": "action",
+        "description": "Enter a chat prompt related to document topic"
+      },
+      {
+        "type": "action",
+        "description": "Submit prompt and receive AI response"
+      },
+      {
+        "type": "assertion",
+        "description": "AI response is contextually relevant, coherent, and reflects document and knowledge references"
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Subscription flow - New user free trial and subscription activation",
+    "description": "Verify that a new user is prompted for payment modal after signup, can initiate free trial, proceed through Polar checkout, and subscription status updates to active.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Complete user signup"
+      },
+      {
+        "type": "assertion",
+        "description": "Payment modal is presented on dashboard load"
+      },
+      {
+        "type": "action",
+        "description": "Start free trial through payment modal"
+      },
+      {
+        "type": "action",
+        "description": "Complete Polar checkout steps successfully"
+      },
+      {
+        "type": "assertion",
+        "description": "Subscription status updates to 'active' in user profile"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "Subscription status update to canceled",
+    "description": "Verify the system properly updates subscription status to 'canceled' on receiving webhook event from Polar.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate Polar webhook event for subscription canceled"
+      },
+      {
+        "type": "assertion",
+        "description": "System updates user subscription status to 'canceled' and reflects in UI"
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "Subscription modal visibility based on subscription status",
+    "description": "Check that payment modal only appears for users without active subscriptions and is hidden for active subscribers.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as user without subscription or inactive subscription"
+      },
+      {
+        "type": "assertion",
+        "description": "Payment modal is shown"
+      },
+      {
+        "type": "action",
+        "description": "Login as user with active subscription"
+      },
+      {
+        "type": "assertion",
+        "description": "Payment modal is not shown"
+      }
+    ]
+  },
+  {
+    "id": "TC025",
+    "title": "Navigation flow protections for authenticated routes",
+    "description": "Verify that protected routes (dashboard, editor) redirect unauthenticated users to login page.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt direct navigation to dashboard URL as unauthenticated user"
+      },
+      {
+        "type": "assertion",
+        "description": "User is redirected to login page"
+      },
+      {
+        "type": "action",
+        "description": "Attempt direct navigation to editor page as unauthenticated user"
+      },
+      {
+        "type": "assertion",
+        "description": "User is redirected to login page"
+      }
+    ]
+  },
+  {
+    "id": "TC026",
+    "title": "Responsive UI behavior on different viewport sizes",
+    "description": "Verify that the landing page, dashboard, and editor UI components render and function correctly on desktop, tablet, and mobile resolutions.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open application on desktop resolution"
+      },
+      {
+        "type": "assertion",
+        "description": "Layout displays correctly without clipping or overflow"
+      },
+      {
+        "type": "action",
+        "description": "Resize browser to tablet resolution"
+      },
+      {
+        "type": "assertion",
+        "description": "UI adapts gracefully, navigation accessible, no broken elements"
+      },
+      {
+        "type": "action",
+        "description": "Resize to mobile viewport"
+      },
+      {
+        "type": "assertion",
+        "description": "Mobile UI is usable with accessible controls, menus, and no horizontal scrolling"
+      }
+    ]
+  },
+  {
+    "id": "TC027",
+    "title": "Save status indicator accuracy during editing",
+    "description": "Ensure the UI indicator correctly shows when document is saving, saved, or failed to save.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Edit document content or title"
+      },
+      {
+        "type": "assertion",
+        "description": "Save indicator shows 'saving' during network request"
+      },
+      {
+        "type": "assertion",
+        "description": "Save indicator updates to 'saved' on successful save"
+      },
+      {
+        "type": "action",
+        "description": "Simulate save failure (e.g. network error)"
+      },
+      {
+        "type": "assertion",
+        "description": "Save indicator shows error or retry state appropriately"
+      }
+    ]
+  }
+]

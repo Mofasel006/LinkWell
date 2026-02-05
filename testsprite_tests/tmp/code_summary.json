@@ -1,0 +1,435 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "React 18",
+    "Vite",
+    "Convex (Serverless Database & Backend)",
+    "Convex Auth (Password Authentication)",
+    "Tiptap (Rich Text Editor)",
+    "Tailwind CSS",
+    "OpenAI API (GPT-4o-mini)",
+    "Polar (Payment Processing)",
+    "React Router",
+    "Lucide React (Icons)"
+  ],
+  "features": [
+    {
+      "name": "User Authentication",
+      "description": "Email and password based authentication with sign up, login, and logout functionality. Uses Convex Auth with password provider.",
+      "files": [
+        "convex/auth.ts",
+        "convex/auth.config.ts",
+        "src/pages/LoginPage.tsx",
+        "src/pages/SignupPage.tsx",
+        "src/components/auth/ProtectedRoute.tsx"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "LinkWell Authentication API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/auth/signIn": {
+            "post": {
+              "summary": "User sign in",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "email": {"type": "string"},
+                        "password": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/auth/signUp": {
+            "post": {
+              "summary": "User registration",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "email": {"type": "string"},
+                        "password": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/auth/signOut": {
+            "post": {
+              "summary": "User logout"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Document Management",
+      "description": "Create, read, update, and delete documents. Users can manage multiple documents with titles, content, and draft/saved status.",
+      "files": [
+        "convex/documents.ts",
+        "src/pages/DashboardPage.tsx",
+        "src/pages/EditorPage.tsx",
+        "src/components/editor/DocumentEditor.tsx",
+        "src/components/editor/TiptapEditor.tsx"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "LinkWell Document API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/documents/list": {
+            "get": {
+              "summary": "List all user documents",
+              "responses": {
+                "200": {
+                  "description": "List of documents",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "_id": {"type": "string"},
+                            "userId": {"type": "string"},
+                            "title": {"type": "string"},
+                            "content": {"type": "string"},
+                            "status": {"type": "string", "enum": ["draft", "saved"]},
+                            "createdAt": {"type": "number"},
+                            "updatedAt": {"type": "number"}
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/documents/get": {
+            "get": {
+              "summary": "Get a specific document",
+              "parameters": [
+                {
+                  "name": "documentId",
+                  "in": "query",
+                  "required": true,
+                  "schema": {"type": "string"}
+                }
+              ]
+            }
+          },
+          "/documents/create": {
+            "post": {
+              "summary": "Create a new document",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "title": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/documents/update": {
+            "post": {
+              "summary": "Update a document",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "documentId": {"type": "string"},
+                        "title": {"type": "string"},
+                        "content": {"type": "string"},
+                        "status": {"type": "string", "enum": ["draft", "saved"]}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/documents/remove": {
+            "post": {
+              "summary": "Delete a document",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "documentId": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Knowledge Management",
+      "description": "Add, update, and delete knowledge references for documents. Knowledge items provide context for AI-powered content generation.",
+      "files": [
+        "convex/knowledge.ts",
+        "src/components/knowledge/KnowledgePanel.tsx"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "LinkWell Knowledge API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/knowledge/listByDocument": {
+            "get": {
+              "summary": "List knowledge items for a document",
+              "parameters": [
+                {
+                  "name": "documentId",
+                  "in": "query",
+                  "required": true,
+                  "schema": {"type": "string"}
+                }
+              ]
+            }
+          },
+          "/knowledge/create": {
+            "post": {
+              "summary": "Create a new knowledge reference",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "documentId": {"type": "string"},
+                        "label": {"type": "string"},
+                        "content": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/knowledge/update": {
+            "post": {
+              "summary": "Update a knowledge reference",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "knowledgeId": {"type": "string"},
+                        "label": {"type": "string"},
+                        "content": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/knowledge/remove": {
+            "post": {
+              "summary": "Delete a knowledge reference",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "knowledgeId": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "AI Content Generation",
+      "description": "AI-powered content generation and chat functionality using OpenAI GPT-4o-mini. Supports quick actions (Continue, Improve, Expand, Summarize) and free-form chat with knowledge context.",
+      "files": [
+        "convex/ai.ts",
+        "src/components/ai/AIChat.tsx"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "LinkWell AI API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/ai/generateContent": {
+            "post": {
+              "summary": "Generate AI content with context",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "documentContent": {"type": "string"},
+                        "knowledgeContext": {"type": "array", "items": {"type": "string"}},
+                        "userPrompt": {"type": "string"},
+                        "selectedText": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/ai/chat": {
+            "post": {
+              "summary": "Chat with AI assistant",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "messages": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "role": {"type": "string", "enum": ["user", "assistant"]},
+                              "content": {"type": "string"}
+                            }
+                          }
+                        },
+                        "documentContent": {"type": "string"},
+                        "knowledgeContext": {"type": "array", "items": {"type": "string"}}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Subscription Management",
+      "description": "Manage user subscriptions with Polar payment integration. Supports active, inactive, trialing, canceled, and past_due statuses. Includes webhook handling for Polar events.",
+      "files": [
+        "convex/subscriptions.ts",
+        "convex/polar.ts",
+        "src/components/payment/PaymentModal.tsx",
+        "src/components/payment/CheckoutPopup.tsx"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "LinkWell Subscription API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/subscriptions/getSubscription": {
+            "get": {
+              "summary": "Get current user subscription"
+            }
+          },
+          "/subscriptions/getSubscriptionByEmail": {
+            "get": {
+              "summary": "Get subscription by email",
+              "parameters": [
+                {
+                  "name": "email",
+                  "in": "query",
+                  "required": true,
+                  "schema": {"type": "string"}
+                }
+              ]
+            }
+          },
+          "/subscriptions/createOrUpdateSubscription": {
+            "post": {
+              "summary": "Create or update subscription",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "email": {"type": "string"},
+                        "polarCustomerId": {"type": "string"},
+                        "polarSubscriptionId": {"type": "string"},
+                        "status": {"type": "string", "enum": ["active", "inactive", "trialing", "canceled", "past_due"]},
+                        "currentPeriodEnd": {"type": "number"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/subscriptions/hasActiveSubscription": {
+            "get": {
+              "summary": "Check if user has active subscription"
+            }
+          },
+          "/polar/webhook": {
+            "post": {
+              "summary": "Handle Polar payment webhooks",
+              "description": "Webhook endpoint for Polar payment events (checkout.created, checkout.updated, subscription.created, subscription.updated, subscription.canceled, order.created)"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Landing Page",
+      "description": "Marketing landing page with features showcase and call-to-action for signup",
+      "files": [
+        "src/pages/LandingPage.tsx"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Landing Page",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/": {
+            "get": {
+              "summary": "Display landing page",
+              "description": "Public landing page with product information"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

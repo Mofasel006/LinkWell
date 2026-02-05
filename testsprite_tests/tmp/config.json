@@ -1,0 +1,25 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5173",
+  "loginUser": "Md Mofasel",
+  "loginPassword": "Aquua23!@#",
+  "executionArgs": {
+    "projectName": "LinkWell",
+    "projectPath": "c:\\Users\\USER\\ReactNativeApp\\LinkWell",
+    "testIds": [
+      "TC001",
+      "TC002",
+      "TC003",
+      "TC004",
+      "TC005"
+    ],
+    "additionalInstruction": "Run only authentication tests first to verify connectivity. Use test credentials email: testuser@linkwell.test, password: TestPassword123!",
+    "envs": {
+      "API_KEY": "sk-user-KQUCc9Zvd8FuiW6R_mWp_cV-aRc72ATTgvBlg-LGqExQIb8srqTrmNqwYvo5CQ5BFihKtVZ2EBvv0NcDJ1N_7QNOADWy9gGFGaXCeu9p3nX6Cg2y6Kr6k4M36KLMwUSbxYU"
+    }
+  },
+  "serverPort": 50473,
+  "proxy": "http://c03a5785-2e77-4add-bcde-cc904746bc41:EgBO1Ac6iPNjpR0BCQ8dPsvXXsSw4GFv@tun.testsprite.com:8080"
+}
