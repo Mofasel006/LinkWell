@@ -4,10 +4,14 @@ import { useQuery, useMutation } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import Button from "../components/ui/Button";
-import Modal from "../components/ui/Modal";
-import Input from "../components/ui/Input";
-import { formatDate } from "../lib/utils";
+import {
+  FileText,
+  Plus,
+  LogOut,
+  MoreVertical,
+  Trash2,
+  Loader2,
+} from "lucide-react";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -15,58 +19,27 @@ export default function DashboardPage() {
   const documents = useQuery(api.documents.list);
   const createDocument = useMutation(api.documents.create);
   const deleteDocument = useMutation(api.documents.remove);
-  const updateDocument = useMutation(api.documents.update);
-
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<{
-    id: Id<"documents">;
-    title: string;
-  } | null>(null);
-  const [newTitle, setNewTitle] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [menuOpen, setMenuOpen] = useState<Id<"documents"> | null>(null);
 
   const handleCreateDocument = async () => {
-    setIsLoading(true);
+    setIsCreating(true);
     try {
-      const id = await createDocument({ title: newTitle || "Untitled Document" });
-      setIsCreateModalOpen(false);
-      setNewTitle("");
-      navigate(`/editor/${id}`);
-    } catch (error) {
-      console.error("Failed to create document:", error);
+      const documentId = await createDocument({});
+      navigate(`/editor/${documentId}`);
+    } catch (err) {
+      console.error("Failed to create document:", err);
     } finally {
-      setIsLoading(false);
+      setIsCreating(false);
     }
   };
 
-  const handleDeleteDocument = async () => {
-    if (!selectedDocument) return;
-    setIsLoading(true);
+  const handleDeleteDocument = async (documentId: Id<"documents">) => {
     try {
-      await deleteDocument({ id: selectedDocument.id });
-      setIsDeleteModalOpen(false);
-      setSelectedDocument(null);
-    } catch (error) {
-      console.error("Failed to delete document:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRenameDocument = async () => {
-    if (!selectedDocument || !newTitle.trim()) return;
-    setIsLoading(true);
-    try {
-      await updateDocument({ id: selectedDocument.id, title: newTitle.trim() });
-      setIsRenameModalOpen(false);
-      setSelectedDocument(null);
-      setNewTitle("");
-    } catch (error) {
-      console.error("Failed to rename document:", error);
-    } finally {
-      setIsLoading(false);
+      await deleteDocument({ documentId });
+      setMenuOpen(null);
+    } catch (err) {
+      console.error("Failed to delete document:", err);
     }
   };
 
@@ -75,131 +48,118 @@ export default function DashboardPage() {
     navigate("/");
   };
 
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">L</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">LinkWell</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button onClick={() => setIsCreateModalOpen(true)}>
-                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                New Document
-              </Button>
-              <Button variant="ghost" onClick={handleSignOut}>
-                Sign out
-              </Button>
-            </div>
-          </div>
+      <header className="px-6 py-4 border-b border-gray-200 bg-white">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <FileText className="h-8 w-8 text-ink-800" />
+            <span className="font-serif text-2xl font-bold text-ink-900">LinkWell</span>
+          </Link>
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 text-ink-600 hover:text-ink-800 font-medium"
+          >
+            <LogOut className="h-5 w-5" />
+            Sign Out
+          </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">My Documents</h1>
-          <p className="text-gray-600 mt-1">Create, edit, and manage your documents</p>
+      <main className="px-6 py-10 max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="font-serif text-3xl font-bold text-ink-900">Your Documents</h1>
+          <button
+            onClick={handleCreateDocument}
+            disabled={isCreating}
+            className="btn-primary flex items-center gap-2"
+          >
+            {isCreating ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Plus className="h-5 w-5" />
+            )}
+            New Document
+          </button>
         </div>
 
+        {/* Document List */}
         {documents === undefined ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-ink-400" />
           </div>
         ) : documents.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="text-center py-20">
+            <FileText className="h-16 w-16 text-ink-300 mx-auto mb-4" />
+            <h2 className="font-serif text-xl font-bold text-ink-800 mb-2">
+              No documents yet
+            </h2>
+            <p className="text-ink-600 mb-6">
+              Create your first document to get started
+            </p>
+            <button
+              onClick={handleCreateDocument}
+              disabled={isCreating}
+              className="btn-primary inline-flex items-center gap-2"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <h3 className="mt-4 text-lg font-medium text-gray-900">No documents yet</h3>
-            <p className="mt-2 text-gray-500">Get started by creating your first document.</p>
-            <div className="mt-6">
-              <Button onClick={() => setIsCreateModalOpen(true)}>
-                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Create Document
-              </Button>
-            </div>
+              {isCreating ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Plus className="h-5 w-5" />
+              )}
+              Create Document
+            </button>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4">
             {documents.map((doc) => (
               <div
                 key={doc._id}
-                className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow group"
+                className="bg-white border border-gray-200 rounded-lg p-5 hover:border-ink-400 transition-colors group"
               >
                 <div className="flex items-start justify-between">
-                  <Link to={`/editor/${doc._id}`} className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 truncate group-hover:text-primary-600 transition-colors">
+                  <Link
+                    to={`/editor/${doc._id}`}
+                    className="flex-1 min-w-0"
+                  >
+                    <h3 className="font-serif text-lg font-bold text-ink-900 truncate group-hover:text-ink-600">
                       {doc.title}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {formatDate(doc.updatedAt)}
-                    </p>
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-3 ${
-                        doc.status === "saved"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {doc.status === "saved" ? "Saved" : "Draft"}
-                    </span>
+                    <div className="flex items-center gap-3 mt-2 text-sm text-ink-400">
+                      <span>Last edited {formatDate(doc.updatedAt)}</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded bg-cream-100 text-ink-600 text-xs font-medium">
+                        {doc.status === "saved" ? "Saved" : "Draft"}
+                      </span>
+                    </div>
                   </Link>
-                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="relative">
                     <button
-                      onClick={() => {
-                        setSelectedDocument({ id: doc._id, title: doc.title });
-                        setNewTitle(doc.title);
-                        setIsRenameModalOpen(true);
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-                      title="Rename"
+                      onClick={() => setMenuOpen(menuOpen === doc._id ? null : doc._id)}
+                      className="p-2 text-ink-400 hover:text-ink-800 rounded-lg hover:bg-cream-100"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
+                      <MoreVertical className="h-5 w-5" />
                     </button>
-                    <button
-                      onClick={() => {
-                        setSelectedDocument({ id: doc._id, title: doc.title });
-                        setIsDeleteModalOpen(true);
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
-                      title="Delete"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
+                    {menuOpen === doc._id && (
+                      <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                        <button
+                          onClick={() => handleDeleteDocument(doc._id)}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 text-sm"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -207,107 +167,6 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
-
-      {/* Create Document Modal */}
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          setNewTitle("");
-        }}
-        title="Create New Document"
-      >
-        <div className="space-y-4">
-          <Input
-            label="Document Title"
-            placeholder="Enter document title"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            autoFocus
-          />
-          <div className="flex justify-end space-x-3">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setIsCreateModalOpen(false);
-                setNewTitle("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleCreateDocument} isLoading={isLoading}>
-              Create
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Delete Document Modal */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setSelectedDocument(null);
-        }}
-        title="Delete Document"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            Are you sure you want to delete "{selectedDocument?.title}"? This action cannot be
-            undone.
-          </p>
-          <div className="flex justify-end space-x-3">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setSelectedDocument(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={handleDeleteDocument} isLoading={isLoading}>
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Rename Document Modal */}
-      <Modal
-        isOpen={isRenameModalOpen}
-        onClose={() => {
-          setIsRenameModalOpen(false);
-          setSelectedDocument(null);
-          setNewTitle("");
-        }}
-        title="Rename Document"
-      >
-        <div className="space-y-4">
-          <Input
-            label="New Title"
-            placeholder="Enter new title"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            autoFocus
-          />
-          <div className="flex justify-end space-x-3">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setIsRenameModalOpen(false);
-                setSelectedDocument(null);
-                setNewTitle("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleRenameDocument} isLoading={isLoading}>
-              Rename
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

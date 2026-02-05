@@ -1,29 +1,36 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery, useMutation } from "convex/react";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import TiptapEditor from "../components/editor/TiptapEditor";
+import { ArrowLeft, Check, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import DocumentEditor from "../components/editor/DocumentEditor";
 import KnowledgePanel from "../components/knowledge/KnowledgePanel";
 import AIChat from "../components/ai/AIChat";
-import { debounce } from "../lib/utils";
 
 export default function EditorPage() {
-  const { id } = useParams<{ id: string }>();
+  const { documentId } = useParams<{ documentId: string }>();
   const navigate = useNavigate();
-  const documentId = id as Id<"documents">;
 
-  const document = useQuery(api.documents.get, { id: documentId });
+  const document = useQuery(
+    api.documents.get,
+    documentId ? { documentId: documentId as Id<"documents"> } : "skip"
+  );
+  const knowledge = useQuery(
+    api.knowledge.listByDocument,
+    documentId ? { documentId: documentId as Id<"documents"> } : "skip"
+  );
   const updateDocument = useMutation(api.documents.update);
+  const generateContent = useAction(api.ai.generateContent);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [selectedText, setSelectedText] = useState("");
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
-  const [isKnowledgePanelCollapsed, setIsKnowledgePanelCollapsed] = useState(false);
-  const [isAIPanelCollapsed, setIsAIPanelCollapsed] = useState(false);
+  const [leftPanelOpen, setLeftPanelOpen] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [selectedText, setSelectedText] = useState("");
 
-  // Initialize state from document
+  // Initialize content from document
   useEffect(() => {
     if (document) {
       setTitle(document.title);
@@ -31,84 +38,79 @@ export default function EditorPage() {
     }
   }, [document]);
 
-  // Debounced save function
-  const debouncedSave = useMemo(
-    () =>
-      debounce(async (newContent: string, newTitle: string) => {
-        try {
-          await updateDocument({
-            id: documentId,
-            content: newContent,
-            title: newTitle,
-            status: "saved",
-          });
-          setSaveStatus("saved");
-        } catch (error) {
-          console.error("Failed to save:", error);
-          setSaveStatus("unsaved");
-        }
-      }, 1000),
+  // Auto-save with debounce
+  const saveDocument = useCallback(
+    async (newTitle: string, newContent: string) => {
+      if (!documentId) return;
+
+      setSaveStatus("saving");
+      try {
+        await updateDocument({
+          documentId: documentId as Id<"documents">,
+          title: newTitle,
+          content: newContent,
+          status: "saved",
+        });
+        setSaveStatus("saved");
+      } catch (err) {
+        console.error("Failed to save:", err);
+        setSaveStatus("unsaved");
+      }
+    },
     [documentId, updateDocument]
   );
 
-  const handleContentChange = useCallback(
-    (newContent: string) => {
-      setContent(newContent);
-      setSaveStatus("saving");
-      debouncedSave(newContent, title);
-    },
-    [title, debouncedSave]
-  );
+  // Debounced save
+  useEffect(() => {
+    if (!document) return;
+    if (title === document.title && content === document.content) return;
 
-  const handleTitleChange = useCallback(
-    (newTitle: string) => {
-      setTitle(newTitle);
-      setSaveStatus("saving");
-      debouncedSave(content, newTitle);
-    },
-    [content, debouncedSave]
-  );
+    setSaveStatus("unsaved");
+    const timeout = setTimeout(() => {
+      saveDocument(title, content);
+    }, 1000);
 
-  const handleInsertContent = useCallback((text: string) => {
-    // Use the global function exposed by TiptapEditor
-    const insertFn = (window as unknown as { insertEditorContent?: (text: string) => void }).insertEditorContent;
-    if (insertFn) {
-      insertFn(text);
-    }
-  }, []);
+    return () => clearTimeout(timeout);
+  }, [title, content, document, saveDocument]);
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  };
+
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent);
+  };
+
+  const handleSelectionChange = (text: string) => {
+    setSelectedText(text);
+  };
+
+  const handleAIInsert = async (prompt: string): Promise<string> => {
+    const knowledgeContext = knowledge?.map((k) => `[${k.label}]\n${k.content}`) ?? [];
+
+    const result = await generateContent({
+      documentContent: content,
+      knowledgeContext,
+      userPrompt: prompt,
+      selectedText: selectedText || undefined,
+    });
+
+    return result;
+  };
 
   if (document === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-cream-50">
+        <Loader2 className="h-8 w-8 animate-spin text-ink-400" />
       </div>
     );
   }
 
   if (document === null) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <svg
-          className="h-16 w-16 text-gray-300"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-        <h2 className="mt-4 text-xl font-semibold text-gray-900">Document not found</h2>
-        <p className="mt-2 text-gray-500">
-          The document you're looking for doesn't exist or has been deleted.
-        </p>
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="mt-6 text-primary-600 hover:text-primary-700 font-medium"
-        >
+      <div className="min-h-screen flex flex-col items-center justify-center bg-cream-50">
+        <p className="text-ink-600 mb-4">Document not found</p>
+        <button onClick={() => navigate("/dashboard")} className="btn-primary">
           Back to Dashboard
         </button>
       </div>
@@ -116,139 +118,105 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="h-screen flex flex-col bg-cream-50">
       {/* Top Bar */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="flex items-center justify-between px-4 h-14">
-          <div className="flex items-center space-x-4">
-            <Link
-              to="/dashboard"
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-              title="Back to Dashboard"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-            </Link>
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-primary-600 rounded flex items-center justify-center">
-                <span className="text-white font-bold text-sm">L</span>
-              </div>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                className="text-lg font-semibold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 px-0"
-                placeholder="Untitled Document"
-              />
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span
-              className={`text-sm ${
-                saveStatus === "saved"
-                  ? "text-green-600"
-                  : saveStatus === "saving"
-                  ? "text-yellow-600"
-                  : "text-red-600"
-              }`}
-            >
-              {saveStatus === "saved" && (
-                <span className="flex items-center space-x-1">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span>Saved</span>
-                </span>
-              )}
-              {saveStatus === "saving" && (
-                <span className="flex items-center space-x-1">
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  <span>Saving...</span>
-                </span>
-              )}
-              {saveStatus === "unsaved" && (
-                <span className="flex items-center space-x-1">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                  <span>Unsaved</span>
-                </span>
-              )}
-            </span>
-          </div>
+      <header className="flex-shrink-0 h-14 px-4 flex items-center justify-between border-b border-gray-200 bg-white">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="p-2 text-ink-600 hover:text-ink-800 hover:bg-cream-100 rounded-lg"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <input
+            type="text"
+            value={title}
+            onChange={handleTitleChange}
+            className="font-serif text-xl font-bold text-ink-900 bg-transparent border-none focus:outline-none focus:ring-0 min-w-0"
+            placeholder="Untitled Document"
+          />
+        </div>
+        <div className="flex items-center gap-2 text-sm text-ink-400">
+          {saveStatus === "saving" && (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Saving...</span>
+            </>
+          )}
+          {saveStatus === "saved" && (
+            <>
+              <Check className="h-4 w-4 text-green-600" />
+              <span className="text-green-600">Saved</span>
+            </>
+          )}
+          {saveStatus === "unsaved" && (
+            <span className="text-amber-600">Unsaved changes</span>
+          )}
         </div>
       </header>
 
-      {/* Main Content - Three Column Layout */}
+      {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel - Knowledge */}
         <div
-          className={`transition-all duration-300 ${
-            isKnowledgePanelCollapsed ? "w-12" : "w-80"
-          } flex-shrink-0`}
+          className={`flex-shrink-0 border-r border-gray-200 bg-white transition-all duration-300 ${
+            leftPanelOpen ? "w-72" : "w-0"
+          } overflow-hidden`}
         >
-          <KnowledgePanel
-            documentId={documentId}
-            isCollapsed={isKnowledgePanelCollapsed}
-            onToggle={() => setIsKnowledgePanelCollapsed(!isKnowledgePanelCollapsed)}
-          />
+          {leftPanelOpen && documentId && (
+            <KnowledgePanel documentId={documentId as Id<"documents">} />
+          )}
         </div>
 
+        {/* Toggle Left Panel */}
+        <button
+          onClick={() => setLeftPanelOpen(!leftPanelOpen)}
+          className="flex-shrink-0 w-6 flex items-center justify-center bg-cream-100 hover:bg-cream-200 border-r border-gray-200"
+        >
+          {leftPanelOpen ? (
+            <ChevronLeft className="h-4 w-4 text-ink-400" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-ink-400" />
+          )}
+        </button>
+
         {/* Center - Editor */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-4xl mx-auto">
-            <TiptapEditor
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-3xl mx-auto py-8 px-8">
+            <DocumentEditor
               content={content}
-              onUpdate={handleContentChange}
-              onSelectionChange={setSelectedText}
+              onChange={handleContentChange}
+              onSelectionChange={handleSelectionChange}
             />
           </div>
         </div>
 
+        {/* Toggle Right Panel */}
+        <button
+          onClick={() => setRightPanelOpen(!rightPanelOpen)}
+          className="flex-shrink-0 w-6 flex items-center justify-center bg-cream-100 hover:bg-cream-200 border-l border-gray-200"
+        >
+          {rightPanelOpen ? (
+            <ChevronRight className="h-4 w-4 text-ink-400" />
+          ) : (
+            <ChevronLeft className="h-4 w-4 text-ink-400" />
+          )}
+        </button>
+
         {/* Right Panel - AI Chat */}
         <div
-          className={`transition-all duration-300 ${
-            isAIPanelCollapsed ? "w-12" : "w-96"
-          } flex-shrink-0`}
+          className={`flex-shrink-0 border-l border-gray-200 bg-white transition-all duration-300 ${
+            rightPanelOpen ? "w-80" : "w-0"
+          } overflow-hidden`}
         >
-          <AIChat
-            documentId={documentId}
-            documentContent={content}
-            selectedText={selectedText}
-            isCollapsed={isAIPanelCollapsed}
-            onToggle={() => setIsAIPanelCollapsed(!isAIPanelCollapsed)}
-            onInsertContent={handleInsertContent}
-          />
+          {rightPanelOpen && (
+            <AIChat
+              onInsert={handleAIInsert}
+              selectedText={selectedText}
+              documentContent={content}
+              knowledge={knowledge ?? []}
+            />
+          )}
         </div>
       </div>
     </div>

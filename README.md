@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # LinkWell - AI-Powered Document Writing Platform
 
 LinkWell is a modern document writing platform that combines a rich text editor with AI assistance and a personal knowledge base.
@@ -118,3 +119,7 @@ linkwell/
 ## License
 
 MIT
+=======
+# LinkWell
+AI Powered writing app
+>>>>>>> 70a4d8f6300aaa256747ec74c5b4bcf7ba876ef2
