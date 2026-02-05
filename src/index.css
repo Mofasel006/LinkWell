@@ -10,7 +10,7 @@
 
 @layer components {
   .btn-primary {
-    @apply px-6 py-3 bg-ink-800 text-white font-medium rounded-lg hover:bg-ink-900 transition-colors;
+    @apply px-6 py-3 bg-ink-800 text-white font-medium rounded-lg hover:bg-ink-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
   
   .btn-secondary {
@@ -18,7 +18,7 @@
   }
   
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ink-800 focus:border-transparent;
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ink-800 focus:border-transparent transition-shadow;
   }
   
   .editor-content {
@@ -26,7 +26,7 @@
   }
   
   .editor-content h1 {
-    @apply text-3xl font-bold mb-4 mt-6;
+    @apply text-3xl font-bold mb-4 mt-6 first:mt-0;
   }
   
   .editor-content h2 {
@@ -39,6 +39,11 @@
   
   .editor-content p {
     @apply mb-4;
+  }
+  
+  .editor-content p.is-editor-empty:first-child::before {
+    @apply text-ink-400 float-left h-0 pointer-events-none;
+    content: attr(data-placeholder);
   }
   
   .editor-content ul,
@@ -61,4 +66,47 @@
   .editor-content a {
     @apply text-blue-600 underline hover:text-blue-800;
   }
+  
+  .editor-content code {
+    @apply bg-cream-100 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+  
+  .editor-content pre {
+    @apply bg-ink-800 text-white p-4 rounded-lg overflow-x-auto my-4;
+  }
+  
+  .editor-content pre code {
+    @apply bg-transparent p-0;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .btn-primary,
+  .btn-secondary {
+    @apply px-4 py-2.5 text-sm;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-cream-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-ink-400 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-ink-600;
 }

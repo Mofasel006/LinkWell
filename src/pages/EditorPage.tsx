@@ -3,14 +3,28 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { ArrowLeft, Check, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Check, Loader2, ChevronLeft, ChevronRight, BookOpen, Sparkles } from "lucide-react";
 import DocumentEditor from "../components/editor/DocumentEditor";
 import KnowledgePanel from "../components/knowledge/KnowledgePanel";
 import AIChat from "../components/ai/AIChat";
 
+// Hook to detect mobile viewport
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return isMobile;
+}
+
 export default function EditorPage() {
   const { documentId } = useParams<{ documentId: string }>();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const document = useQuery(
     api.documents.get,
@@ -26,9 +40,10 @@ export default function EditorPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
-  const [leftPanelOpen, setLeftPanelOpen] = useState(true);
-  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [leftPanelOpen, setLeftPanelOpen] = useState(!isMobile);
+  const [rightPanelOpen, setRightPanelOpen] = useState(!isMobile);
   const [selectedText, setSelectedText] = useState("");
+  const [mobilePanel, setMobilePanel] = useState<"editor" | "knowledge" | "ai">("editor");
 
   // Initialize content from document
   useEffect(() => {
@@ -117,6 +132,93 @@ export default function EditorPage() {
     );
   }
 
+  // Mobile view
+  if (isMobile) {
+    return (
+      <div className="h-screen flex flex-col bg-cream-50">
+        {/* Mobile Top Bar */}
+        <header className="flex-shrink-0 h-14 px-3 flex items-center justify-between border-b border-gray-200 bg-white">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="p-2 text-ink-600 hover:text-ink-800 rounded-lg flex-shrink-0"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <input
+              type="text"
+              value={title}
+              onChange={handleTitleChange}
+              className="font-serif text-lg font-bold text-ink-900 bg-transparent border-none focus:outline-none min-w-0 flex-1"
+              placeholder="Untitled"
+            />
+          </div>
+          <div className="flex items-center gap-1 text-xs text-ink-400 flex-shrink-0">
+            {saveStatus === "saving" && <Loader2 className="h-3 w-3 animate-spin" />}
+            {saveStatus === "saved" && <Check className="h-3 w-3 text-green-600" />}
+            {saveStatus === "unsaved" && <span className="text-amber-600">...</span>}
+          </div>
+        </header>
+
+        {/* Mobile Content */}
+        <div className="flex-1 overflow-hidden">
+          {mobilePanel === "editor" && (
+            <div className="h-full overflow-auto p-4">
+              <DocumentEditor
+                content={content}
+                onChange={handleContentChange}
+                onSelectionChange={handleSelectionChange}
+              />
+            </div>
+          )}
+          {mobilePanel === "knowledge" && documentId && (
+            <KnowledgePanel documentId={documentId as Id<"documents">} />
+          )}
+          {mobilePanel === "ai" && (
+            <AIChat
+              onInsert={handleAIInsert}
+              selectedText={selectedText}
+              documentContent={content}
+              knowledge={knowledge ?? []}
+            />
+          )}
+        </div>
+
+        {/* Mobile Bottom Nav */}
+        <nav className="flex-shrink-0 h-14 flex border-t border-gray-200 bg-white">
+          <button
+            onClick={() => setMobilePanel("knowledge")}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 ${
+              mobilePanel === "knowledge" ? "text-ink-800 bg-cream-100" : "text-ink-400"
+            }`}
+          >
+            <BookOpen className="h-5 w-5" />
+            <span className="text-xs">Knowledge</span>
+          </button>
+          <button
+            onClick={() => setMobilePanel("editor")}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 ${
+              mobilePanel === "editor" ? "text-ink-800 bg-cream-100" : "text-ink-400"
+            }`}
+          >
+            <ArrowLeft className="h-5 w-5 rotate-90" />
+            <span className="text-xs">Editor</span>
+          </button>
+          <button
+            onClick={() => setMobilePanel("ai")}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 ${
+              mobilePanel === "ai" ? "text-ink-800 bg-cream-100" : "text-ink-400"
+            }`}
+          >
+            <Sparkles className="h-5 w-5" />
+            <span className="text-xs">AI</span>
+          </button>
+        </nav>
+      </div>
+    );
+  }
+
+  // Desktop view
   return (
     <div className="h-screen flex flex-col bg-cream-50">
       {/* Top Bar */}
@@ -172,6 +274,7 @@ export default function EditorPage() {
         <button
           onClick={() => setLeftPanelOpen(!leftPanelOpen)}
           className="flex-shrink-0 w-6 flex items-center justify-center bg-cream-100 hover:bg-cream-200 border-r border-gray-200"
+          title={leftPanelOpen ? "Hide knowledge panel" : "Show knowledge panel"}
         >
           {leftPanelOpen ? (
             <ChevronLeft className="h-4 w-4 text-ink-400" />
@@ -195,6 +298,7 @@ export default function EditorPage() {
         <button
           onClick={() => setRightPanelOpen(!rightPanelOpen)}
           className="flex-shrink-0 w-6 flex items-center justify-center bg-cream-100 hover:bg-cream-200 border-l border-gray-200"
+          title={rightPanelOpen ? "Hide AI panel" : "Show AI panel"}
         >
           {rightPanelOpen ? (
             <ChevronRight className="h-4 w-4 text-ink-400" />
