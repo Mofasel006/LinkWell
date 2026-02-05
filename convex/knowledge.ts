@@ -1,28 +1,27 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { auth } from "./auth";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
-export const list = query({
+export const listByDocument = query({
   args: { documentId: v.id("documents") },
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) {
       return [];
     }
-    
-    // Verify user owns the document
+
+    // Verify document ownership
     const document = await ctx.db.get(args.documentId);
     if (!document || document.userId !== userId) {
       return [];
     }
-    
-    const entries = await ctx.db
+
+    const knowledge = await ctx.db
       .query("knowledge")
       .withIndex("by_document", (q) => q.eq("documentId", args.documentId))
-      .order("desc")
       .collect();
-    
-    return entries;
+
+    return knowledge;
   },
 });
 
@@ -33,72 +32,72 @@ export const create = mutation({
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) {
       throw new Error("Not authenticated");
     }
-    
-    // Verify user owns the document
+
+    // Verify document ownership
     const document = await ctx.db.get(args.documentId);
     if (!document || document.userId !== userId) {
       throw new Error("Document not found");
     }
-    
-    const entryId = await ctx.db.insert("knowledge", {
+
+    const knowledgeId = await ctx.db.insert("knowledge", {
       documentId: args.documentId,
       userId,
       label: args.label,
       content: args.content,
       createdAt: Date.now(),
     });
-    
-    return entryId;
+
+    return knowledgeId;
   },
 });
 
 export const update = mutation({
   args: {
-    id: v.id("knowledge"),
+    knowledgeId: v.id("knowledge"),
     label: v.optional(v.string()),
     content: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) {
       throw new Error("Not authenticated");
     }
-    
-    const entry = await ctx.db.get(args.id);
-    if (!entry || entry.userId !== userId) {
+
+    const knowledge = await ctx.db.get(args.knowledgeId);
+    if (!knowledge || knowledge.userId !== userId) {
       throw new Error("Knowledge entry not found");
     }
-    
-    const updates: Record<string, unknown> = {};
-    
+
+    const updates: Partial<{ label: string; content: string }> = {};
     if (args.label !== undefined) {
       updates.label = args.label;
     }
     if (args.content !== undefined) {
       updates.content = args.content;
     }
-    
-    await ctx.db.patch(args.id, updates);
+
+    await ctx.db.patch(args.knowledgeId, updates);
+    return args.knowledgeId;
   },
 });
 
 export const remove = mutation({
-  args: { id: v.id("knowledge") },
+  args: { knowledgeId: v.id("knowledge") },
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) {
       throw new Error("Not authenticated");
     }
-    
-    const entry = await ctx.db.get(args.id);
-    if (!entry || entry.userId !== userId) {
+
+    const knowledge = await ctx.db.get(args.knowledgeId);
+    if (!knowledge || knowledge.userId !== userId) {
       throw new Error("Knowledge entry not found");
     }
-    
-    await ctx.db.delete(args.id);
+
+    await ctx.db.delete(args.knowledgeId);
   },
 });

@@ -4,21 +4,21 @@ import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
   ...authTables,
-  
+
   documents: defineTable({
     userId: v.id("users"),
     title: v.string(),
-    content: v.string(),        // Tiptap JSON or HTML
-    status: v.string(),         // "draft" | "saved"
+    content: v.string(),
+    status: v.union(v.literal("draft"), v.literal("saved")),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
-  
+
   knowledge: defineTable({
     documentId: v.id("documents"),
     userId: v.id("users"),
-    label: v.string(),          // e.g., "Research Notes"
-    content: v.string(),        // Plain text reference
+    label: v.string(),
+    content: v.string(),
     createdAt: v.number(),
   }).index("by_document", ["documentId"]),
 });
