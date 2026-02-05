@@ -13,6 +13,7 @@ An AI-powered document writing platform that helps you create high-quality conte
 - **Frontend**: React with TypeScript (Vite)
 - **Backend/Database**: Convex (real-time, serverless)
 - **Authentication**: Convex Auth (email + password)
+- **Payments**: Polar (subscription management)
 - **AI**: OpenAI API (GPT-4o-mini)
 - **Rich Text Editor**: Tiptap
 - **Styling**: Tailwind CSS
@@ -102,7 +103,29 @@ VITE_CONVEX_URL=<your-convex-deployment-url>
 
 ```
 OPENAI_API_KEY=<your-openai-api-key>
+POLAR_WEBHOOK_SECRET=<your-polar-webhook-secret>
 ```
+
+## Polar Payments Setup
+
+1. **Create a Polar account** at [polar.sh](https://polar.sh)
+
+2. **Set up a product** with your pricing
+
+3. **Configure the webhook**:
+   - Go to your Polar dashboard > Settings > Webhooks
+   - Add a new webhook with URL: `https://<your-convex-deployment>.convex.site/polar/webhook`
+   - Select events: `checkout.created`, `checkout.updated`, `subscription.created`, `subscription.updated`, `subscription.canceled`, `order.created`
+   - Copy the webhook secret
+
+4. **Add webhook secret to Convex**:
+   ```bash
+   npx convex env set POLAR_WEBHOOK_SECRET <your-webhook-secret>
+   ```
+
+5. **Update checkout link** (if needed):
+   - Edit `src/components/payment/CheckoutPopup.tsx`
+   - Replace `POLAR_CHECKOUT_LINK` with your checkout link
 
 ## License
 

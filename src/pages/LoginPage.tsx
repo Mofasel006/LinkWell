@@ -23,7 +23,11 @@ export default function LoginPage() {
       formData.set("flow", "signIn");
 
       await signIn("password", formData);
-      navigate("/dashboard");
+      
+      // Store email for subscription lookup
+      localStorage.setItem("linkwell_user_email", email);
+      
+      navigate("/dashboard", { state: { email } });
     } catch (err) {
       setError("Invalid email or password. Please try again.");
       console.error(err);

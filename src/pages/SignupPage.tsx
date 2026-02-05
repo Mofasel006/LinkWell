@@ -35,7 +35,11 @@ export default function SignupPage() {
       formData.set("flow", "signUp");
 
       await signIn("password", formData);
-      navigate("/dashboard");
+      
+      // Store email for subscription initialization
+      localStorage.setItem("linkwell_user_email", email);
+      
+      navigate("/dashboard", { state: { email, isNewUser: true } });
     } catch (err) {
       setError("Could not create account. Please try again.");
       console.error(err);

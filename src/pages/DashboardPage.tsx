@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
@@ -12,15 +12,92 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
+import PaymentModal from "../components/payment/PaymentModal";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signOut } = useAuthActions();
   const documents = useQuery(api.documents.list);
+  const subscription = useQuery(api.subscriptions.getSubscription);
+  const createSubscription = useMutation(api.subscriptions.createOrUpdateSubscription);
   const createDocument = useMutation(api.documents.create);
   const deleteDocument = useMutation(api.documents.remove);
   const [isCreating, setIsCreating] = useState(false);
   const [menuOpen, setMenuOpen] = useState<Id<"documents"> | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [subscriptionInitialized, setSubscriptionInitialized] = useState(false);
+
+  // Get email from navigation state or localStorage
+  useEffect(() => {
+    const stateEmail = (location.state as { email?: string })?.email;
+    const storedEmail = localStorage.getItem("linkwell_user_email");
+    const email = stateEmail || storedEmail || "";
+    
+    if (email) {
+      setUserEmail(email);
+    }
+  }, [location.state]);
+
+  // Initialize subscription record for new users
+  useEffect(() => {
+    const initializeSubscription = async () => {
+      if (subscription === undefined) return; // Still loading
+      if (subscriptionInitialized) return;
+      
+      // If no subscription exists and we have an email, create one
+      if (subscription === null && userEmail) {
+        setSubscriptionInitialized(true);
+        try {
+          await createSubscription({
+            email: userEmail,
+            status: "inactive",
+          });
+        } catch (error) {
+          console.error("Failed to initialize subscription:", error);
+        }
+      }
+    };
+
+    initializeSubscription();
+  }, [subscription, userEmail, subscriptionInitialized, createSubscription]);
+
+  // Check if user needs to see payment modal
+  useEffect(() => {
+    if (subscription === undefined) return; // Still loading
+    
+    // Show payment modal if no subscription exists or not active
+    if (subscription === null) {
+      setShowPaymentModal(true);
+    } else if (subscription.status !== "active" && subscription.status !== "trialing") {
+      setShowPaymentModal(true);
+    }
+    
+    if (subscription?.email) {
+      setUserEmail(subscription.email);
+    }
+  }, [subscription]);
+
+  const handlePaymentSuccess = async () => {
+    // The webhook will update the subscription status
+    // For now, close the modal - it will reopen if webhook hasn't updated yet
+    setShowPaymentModal(false);
+    
+    // Optimistically update the subscription to active
+    if (userEmail) {
+      try {
+        await createSubscription({
+          email: userEmail,
+          status: "active",
+        });
+      } catch (error) {
+        console.error("Failed to update subscription:", error);
+      }
+    }
+  };
+
+  const hasActiveSubscription = subscription?.status === "active" || subscription?.status === "trialing";
 
   const handleCreateDocument = async () => {
     setIsCreating(true);
@@ -58,6 +135,14 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-cream-50">
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onSuccess={handlePaymentSuccess}
+        userEmail={userEmail || "user@example.com"}
+      />
+
       {/* Header */}
       <header className="px-6 py-4 border-b border-gray-200 bg-white">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -65,13 +150,23 @@ export default function DashboardPage() {
             <FileText className="h-8 w-8 text-ink-800" />
             <span className="font-serif text-2xl font-bold text-ink-900">LinkWell</span>
           </Link>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-2 text-ink-600 hover:text-ink-800 font-medium"
-          >
-            <LogOut className="h-5 w-5" />
-            Sign Out
-          </button>
+          <div className="flex items-center gap-4">
+            {!hasActiveSubscription && (
+              <button
+                onClick={() => setShowPaymentModal(true)}
+                className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors"
+              >
+                Upgrade
+              </button>
+            )}
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 text-ink-600 hover:text-ink-800 font-medium"
+            >
+              <LogOut className="h-5 w-5" />
+              Sign Out
+            </button>
+          </div>
         </div>
       </header>
 
